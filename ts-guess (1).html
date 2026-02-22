@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TS Guess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #FAFAF8;
+  --black: #0A0A0A;
+  --gray-50:  #F7F6F4;
+  --gray-100: #EEECE9;
+  --gray-200: #E0DDD9;
+  --gray-400: #B0ADA8;
+  --gray-500: #8A8880;
+  --gray-700: #4A4845;
+
+  --correct: #16A34A;
+  --correct-bg: #F0FDF4;
+  --correct-border: #BBF7D0;
+  --wrong: #DC2626;
+  --wrong-bg: #FEF2F2;
+  --wrong-border: #FECACA;
+  --reveal-bg: #F0FDF4;
+  --reveal-border: #BBF7D0;
+
+  --gold: #C9A84C;
+  --rare: #4B6FD4;
+  --common: #8A8880;
+  --legendary: #C9A84C;
+  --fandom: #7C5DC7;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 16px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--white);
+  color: var(--black);
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+  }
+  .app {
+    height: 90dvh;
+    max-height: 900px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+    background: var(--white);
+  }
+}
+
+/* ════════════════════════════
+   SCREENS
+════════════════════════════ */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  transform: translateY(12px);
+  background: var(--white);
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ════════════════════════════
+   START SCREEN
+════════════════════════════ */
+#startScreen {
+  justify-content: space-between;
+  padding: 48px 28px 36px;
+}
+
+.start-top { display: flex; flex-direction: column; }
+
+.start-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--gray-500);
+  margin-bottom: 32px;
+}
+
+.start-logo span { color: var(--gold); }
+
+.start-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 18vw, 84px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  margin-bottom: 16px;
+}
+
+.start-desc {
+  font-size: 15px;
+  color: var(--gray-500);
+  font-weight: 300;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.start-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-100);
+}
+.rule-row:last-child { border-bottom: none; }
+
+.rule-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--gray-400);
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.rule-text {
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.4;
+}
+
+.rule-text strong { color: var(--black); font-weight: 500; }
+
+.start-bottom { display: flex; flex-direction: column; gap: 12px; }
+
+.btn-play {
+  width: 100%;
+  height: 56px;
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.btn-play:hover { opacity: 0.88; }
+.btn-play:active { transform: scale(0.98); }
+
+.start-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-400);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ════════════════════════════
+   GAME SCREEN
+════════════════════════════ */
+#gameScreen { overflow: hidden; }
+
+/* Header */
+.game-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 24px 14px;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.header-score {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.header-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  transition: all 0.25s var(--ease);
+}
+
+.header-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--gray-200);
+  margin: 0 16px;
+}
+
+.header-streak {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.streak-icon { font-size: 13px; }
+
+.streak-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.header-spacer { flex: 1; }
+
+.header-progress {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--gray-400);
+}
+
+/* Timer */
+.timer-wrap {
+  padding: 0 24px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.timer-track {
+  height: 2px;
+  background: var(--gray-100);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.timer-fill {
+  height: 100%;
+  background: var(--black);
+  border-radius: 2px;
+  transition: width 0.1s linear, background 0.4s;
+}
+.timer-fill.warn { background: #F59E0B; }
+.timer-fill.danger { background: var(--wrong); }
+
+/* Moment card */
+.moment-card {
+  margin: 0 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.moment-visual {
+  height: 164px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moment-bg { position: absolute; inset: 0; }
+
+.moment-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.65) 100%);
+}
+
+.moment-letters {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 110px;
+  color: rgba(255,255,255,0.07);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+.moment-caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 16px;
+  z-index: 2;
+}
+
+.moment-player {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  line-height: 0.9;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.moment-play {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 5px;
+  font-weight: 300;
+}
+
+.tier-pill {
+  position: absolute;
+  top: 12px; right: 12px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.85);
+  z-index: 3;
+}
+
+/* meta row */
+.moment-stats {
+  display: flex;
+  border-top: 1px solid var(--gray-100);
+}
+
+.mstat {
+  flex: 1;
+  padding: 11px 14px;
+  border-right: 1px solid var(--gray-100);
+}
+.mstat:last-child { border-right: none; }
+
+.mstat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 3px;
+}
+
+.mstat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--black);
+}
+
+/* Question */
+.question-row {
+  padding: 16px 24px 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.q-label {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-weight: 300;
+}
+
+.q-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+/* Options */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.opt-btn {
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 16px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.opt-btn:hover {
+  border-color: var(--gray-400);
+  background: var(--gray-50);
+}
+
+.opt-btn:active { transform: scale(0.97); }
+
+.opt-price {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--black);
+  transition: color 0.2s;
+}
+
+.opt-usd {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+}
+
+/* States */
+.opt-btn.correct {
+  border-color: var(--correct);
+  background: var(--correct-bg);
+}
+.opt-btn.correct .opt-price { color: var(--correct); }
+
+.opt-btn.wrong {
+  border-color: var(--wrong);
+  background: var(--wrong-bg);
+}
+.opt-btn.wrong .opt-price { color: var(--wrong); }
+
+.opt-btn.reveal {
+  border-color: var(--correct);
+  background: var(--correct-bg);
+}
+.opt-btn.reveal .opt-price { color: var(--correct); }
+
+.opt-btn.dimmed {
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+/* Feedback */
+.feedback {
+  margin: 10px 16px 0;
+  padding: 13px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.feedback.show { opacity: 1; transform: translateY(0); }
+
+.feedback.fb-correct { background: var(--correct-bg); border: 1px solid var(--correct-border); }
+.feedback.fb-wrong   { background: var(--wrong-bg);   border: 1px solid var(--wrong-border); }
+.feedback.fb-timeout { background: #FFFBEB; border: 1px solid #FDE68A; }
+
+.fb-msg {
+  font-size: 13px;
+  font-weight: 500;
+}
+.feedback.fb-correct .fb-msg { color: var(--correct); }
+.feedback.fb-wrong .fb-msg   { color: var(--wrong); }
+.feedback.fb-timeout .fb-msg { color: #92400E; }
+
+.fb-pts {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+}
+.feedback.fb-correct .fb-pts { color: var(--correct); }
+.feedback.fb-wrong .fb-pts,
+.feedback.fb-timeout .fb-pts { color: var(--gray-400); }
+
+/* Bottom */
+.bottom-wrap {
+  margin-top: auto;
+  padding: 10px 16px 28px;
+  flex-shrink: 0;
+}
+
+.btn-next {
+  width: 100%;
+  height: 52px;
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.btn-next.show {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+.btn-next:active { transform: scale(0.98); }
+
+/* ════════════════════════════
+   END SCREEN
+════════════════════════════ */
+#endScreen {
+  justify-content: space-between;
+  padding: 44px 28px 36px;
+}
+
+.end-top {}
+
+.end-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 16px;
+}
+
+.end-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(88px, 24vw, 112px);
+  line-height: 0.85;
+  margin-bottom: 6px;
+}
+
+.end-score-sub {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-weight: 300;
+  margin-bottom: 36px;
+}
+
+.end-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.end-cell {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.end-cell-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.end-cell-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+}
+
+.end-verdict {
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.verdict-icon { font-size: 28px; flex-shrink: 0; }
+
+.verdict-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.verdict-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+.end-bottom {}
+
+.btn-replay {
+  width: 100%;
+  height: 54px;
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-bottom: 10px;
+}
+.btn-replay:hover { opacity: 0.88; }
+.btn-replay:active { transform: scale(0.98); }
+
+.end-share {
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  color: var(--gray-500);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.end-share:hover { border-color: var(--black); color: var(--black); }
+
+/* ── Animations ── */
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-in { animation: cardSlideIn 0.4s var(--ease) forwards; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-5px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
+}
+.shake { animation: shake 0.32s ease; }
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+.pop { animation: pop 0.3s var(--ease); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- START -->
+  <div class="screen active" id="startScreen">
+    <div class="start-top">
+      <div class="start-logo">TS <span>Guess</span></div>
+      <div class="start-headline">Guess<br>The<br>Price.</div>
+      <p class="start-desc">10 Top Shot moments. Guess the Lowest Ask before the buzzer.</p>
+    </div>
+
+    <div class="start-rules">
+      <div class="rule-row">
+        <div class="rule-num">01</div>
+        <div class="rule-text"><strong>Study the moment</strong> — player, tier, serial number, circulation</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-num">02</div>
+        <div class="rule-text"><strong>Pick the right price</strong> from 4 options before time runs out</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-num">03</div>
+        <div class="rule-text"><strong>Build your streak</strong> — each correct answer multiplies your points</div>
+      </div>
+    </div>
+
+    <div class="start-bottom">
+      <button class="btn-play" onclick="startGame()">Let's Play</button>
+      <div class="start-note">10 rounds · 15 sec per round</div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="gameScreen">
+
+    <div class="game-header">
+      <div class="header-score">
+        <div class="header-label">Score</div>
+        <div class="header-value" id="scoreVal">0</div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-streak">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-num" id="streakVal">0</span>
+      </div>
+      <div class="header-spacer"></div>
+      <div class="header-progress" id="progressVal">1 / 10</div>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-track">
+        <div class="timer-fill" id="timerFill"></div>
+      </div>
+    </div>
+
+    <div class="moment-card card-in" id="momentCard">
+      <div class="moment-visual">
+        <div class="moment-bg" id="mBg"></div>
+        <div class="moment-overlay"></div>
+        <div class="moment-letters" id="mLetters">--</div>
+        <div class="tier-pill" id="mTier">—</div>
+        <div class="moment-caption">
+          <div class="moment-player" id="mPlayer">—</div>
+          <div class="moment-play" id="mPlay">—</div>
+        </div>
+      </div>
+      <div class="moment-stats">
+        <div class="mstat">
+          <div class="mstat-label">Set</div>
+          <div class="mstat-value" id="mSet">—</div>
+        </div>
+        <div class="mstat">
+          <div class="mstat-label">Serial</div>
+          <div class="mstat-value" id="mSerial">—</div>
+        </div>
+        <div class="mstat">
+          <div class="mstat-label">Circulation</div>
+          <div class="mstat-value" id="mCirc">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="question-row">
+      <span class="q-label">What's the</span>
+      <span class="q-main">Lowest Ask?</span>
+    </div>
+
+    <div class="options-grid">
+      <button class="opt-btn" id="opt0" onclick="answer(0)">
+        <span class="opt-price">—</span>
+        <span class="opt-usd">USD</span>
+      </button>
+      <button class="opt-btn" id="opt1" onclick="answer(1)">
+        <span class="opt-price">—</span>
+        <span class="opt-usd">USD</span>
+      </button>
+      <button class="opt-btn" id="opt2" onclick="answer(2)">
+        <span class="opt-price">—</span>
+        <span class="opt-usd">USD</span>
+      </button>
+      <button class="opt-btn" id="opt3" onclick="answer(3)">
+        <span class="opt-price">—</span>
+        <span class="opt-usd">USD</span>
+      </button>
+    </div>
+
+    <div class="feedback" id="feedback">
+      <span class="fb-msg" id="fbMsg">—</span>
+      <span class="fb-pts" id="fbPts">—</span>
+    </div>
+
+    <div class="bottom-wrap">
+      <button class="btn-next" id="nextBtn" onclick="nextQuestion()">
+        Next Moment →
+      </button>
+    </div>
+
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="endScreen">
+    <div class="end-top">
+      <div class="end-eyebrow">Game Over</div>
+      <div class="end-score" id="finalScore">0</div>
+      <div class="end-score-sub">points</div>
+
+      <div class="end-grid">
+        <div class="end-cell">
+          <div class="end-cell-val" id="statCorrect">0</div>
+          <div class="end-cell-label">Correct</div>
+        </div>
+        <div class="end-cell">
+          <div class="end-cell-val" id="statStreak">0</div>
+          <div class="end-cell-label">Best Streak</div>
+        </div>
+        <div class="end-cell">
+          <div class="end-cell-val" id="statAcc">0%</div>
+          <div class="end-cell-label">Accuracy</div>
+        </div>
+      </div>
+
+      <div class="end-verdict">
+        <div class="verdict-icon" id="vIcon">🤔</div>
+        <div>
+          <div class="verdict-title" id="vTitle">—</div>
+          <div class="verdict-sub" id="vSub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="end-bottom">
+      <button class="btn-replay" onclick="startGame()">Play Again</button>
+      <button class="end-share" onclick="shareScore()">Share Score ↗</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const PROXY = 'https://topshot-proxy.vercel.app/api/graphql';
+const TOTAL = 10, TIMER = 15;
+
+// ── TEAM COLORS ─────────────────────────────────────────
+const TEAM_COLORS = {
+  "Los Angeles Lakers":       ["#552583","#FDB927"],
+  "Golden State Warriors":    ["#1D428A","#FFC72C"],
+  "Milwaukee Bucks":          ["#00471B","#EEE1C6"],
+  "Denver Nuggets":           ["#0E2240","#FEC524"],
+  "Boston Celtics":           ["#007A33","#BA9653"],
+  "Memphis Grizzlies":        ["#5D76A9","#12173F"],
+  "Phoenix Suns":             ["#1D1160","#E56020"],
+  "Dallas Mavericks":         ["#00538C","#B8C4CA"],
+  "New Orleans Pelicans":     ["#002B5C","#E31837"],
+  "OKC Thunder":              ["#007AC1","#EF3B24"],
+  "Minnesota Timberwolves":   ["#236192","#9EA2A2"],
+  "San Antonio Spurs":        ["#222222","#C4CED4"],
+  "Miami Heat":               ["#98002E","#F9A01B"],
+  "Atlanta Hawks":            ["#E03A3E","#C1D32F"],
+  "Philadelphia 76ers":       ["#006BB6","#ED174C"],
+  "Indiana Pacers":           ["#002D62","#FDBB30"],
+  "Charlotte Hornets":        ["#1D1160","#00788C"],
+  "Chicago Bulls":            ["#CE1141","#000000"],
+  "Cleveland Cavaliers":      ["#860038","#FDBB30"],
+  "Detroit Pistons":          ["#C8102E","#1D42BA"],
+  "New York Knicks":          ["#006BB6","#F58426"],
+  "Toronto Raptors":          ["#CE1141","#000000"],
+  "Washington Wizards":       ["#002B5C","#E31837"],
+  "Brooklyn Nets":            ["#000000","#FFFFFF"],
+  "Houston Rockets":          ["#CE1141","#C4CED4"],
+  "Sacramento Kings":         ["#5A2D81","#63727A"],
+  "Portland Trail Blazers":   ["#E03A3E","#000000"],
+  "Utah Jazz":                ["#002B5C","#F9A01B"],
+  "Los Angeles Clippers":     ["#C8102E","#1D428A"],
+  "Orlando Magic":            ["#0077C0","#000000"],
+};
+
+function teamColors(team) {
+  return TEAM_COLORS[team] || ["#1a1a2e","#333355"];
+}
+
+// ── FALLBACK DATA ────────────────────────────────────────
+const FALLBACK = [
+  { player:"LeBron James",            team:"Los Angeles Lakers",       play:"Dunk",            set:"Series 1",     serial:23,    circ:49,    tier:"LEGENDARY", price:18500 },
+  { player:"Stephen Curry",           team:"Golden State Warriors",    play:"3-Pointer",       set:"Holo MMXX",    serial:30,    circ:99,    tier:"LEGENDARY", price:3800  },
+  { player:"Victor Wembanyama",       team:"San Antonio Spurs",        play:"Block",           set:"Rookie Debut", serial:1,     circ:750,   tier:"LEGENDARY", price:8200  },
+  { player:"Giannis Antetokounmpo",   team:"Milwaukee Bucks",          play:"Dunk",            set:"Championship", serial:34,    circ:499,   tier:"LEGENDARY", price:620   },
+  { player:"Nikola Jokic",            team:"Denver Nuggets",           play:"Triple-Double",   set:"Championship", serial:15,    circ:1000,  tier:"LEGENDARY", price:480   },
+  { player:"Ja Morant",               team:"Memphis Grizzlies",        play:"Alley-Oop",       set:"Rising Stars", serial:12,    circ:4999,  tier:"RARE",      price:85    },
+  { player:"Kevin Durant",            team:"Phoenix Suns",             play:"Jumper",          set:"Series 3",     serial:7,     circ:3999,  tier:"RARE",      price:62    },
+  { player:"Luka Doncic",             team:"Dallas Mavericks",         play:"Step-back Three", set:"Series 2",     serial:77,    circ:4444,  tier:"RARE",      price:48    },
+  { player:"Zion Williamson",         team:"New Orleans Pelicans",     play:"Dunk",            set:"Series 2",     serial:1,     circ:999,   tier:"RARE",      price:240   },
+  { player:"Shai Gilgeous-Alexander", team:"OKC Thunder",              play:"Floater",         set:"Series 4",     serial:2,     circ:1999,  tier:"RARE",      price:95    },
+  { player:"LeBron James",            team:"Los Angeles Lakers",       play:"Assist",          set:"Series 4",     serial:8823,  circ:49999, tier:"COMMON",    price:9     },
+  { player:"Stephen Curry",           team:"Golden State Warriors",    play:"3-Pointer",       set:"Series 2",     serial:14203, circ:49999, tier:"COMMON",    price:4     },
+  { player:"Luka Doncic",             team:"Dallas Mavericks",         play:"Triple-Double",   set:"Series 4",     serial:32100, circ:49999, tier:"COMMON",    price:3     },
+  { player:"Giannis Antetokounmpo",   team:"Milwaukee Bucks",          play:"Block",           set:"Series 3",     serial:9988,  circ:25000, tier:"COMMON",    price:5     },
+  { player:"Devin Booker",            team:"Phoenix Suns",             play:"Mid-Range",       set:"Series 3",     serial:22411, circ:49999, tier:"COMMON",    price:3     },
+  { player:"Damian Lillard",          team:"Milwaukee Bucks",          play:"Game Winner",     set:"Series 4",     serial:5501,  circ:15000, tier:"COMMON",    price:7     },
+  { player:"Trae Young",              team:"Atlanta Hawks",            play:"Deep Three",      set:"Series 2",     serial:4412,  circ:25000, tier:"COMMON",    price:4     },
+  { player:"Joel Embiid",             team:"Philadelphia 76ers",       play:"Fadeaway",        set:"Series 3",     serial:7823,  circ:49999, tier:"COMMON",    price:5     },
+  { player:"Jimmy Butler",            team:"Miami Heat",               play:"And-1",           set:"Playoffs",     serial:22,    circ:4999,  tier:"FANDOM",    price:15    },
+  { player:"Anthony Edwards",         team:"Minnesota Timberwolves",   play:"Dunk",            set:"Series 3",     serial:5,     circ:3333,  tier:"RARE",      price:72    },
+];
+
+// ── TIER MAPPING ─────────────────────────────────────────
+const TIER_LABEL = { COMMON:"Common", RARE:"Rare", LEGENDARY:"Legendary", FANDOM:"Fandom" };
+const TIER_MAP   = { "common":"COMMON", "rare":"RARE", "legendary":"LEGENDARY", "fandom":"FANDOM" };
+const CORRECT_MSGS = ["Perfect 🎯","Nailed it!","Nice read","You know the market","On the money"];
+const WRONG_MSGS   = ["Not quite","Way off 😬","Missed it","Off the mark"];
+
+// ── STATE ───────────────────────────────────────────────
+let score=0, streak=0, bestStreak=0, correct=0, qIndex=0;
+let queue=[], current=null, answered=false;
+let timerInterval=null, timerLeft=TIMER;
+let usingLiveData = false;
+
+// ── HELPERS ─────────────────────────────────────────────
+const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+
+function formatPrice(p) {
+  if (p >= 10000) return `$${(p/1000).toFixed(0)}K`;
+  if (p >= 1000)  return `$${(p/1000).toFixed(1)}K`;
+  return `$${p}`;
+}
+
+function generateDecoys(price) {
+  const ratios = shuffle([0.2, 0.35, 0.5, 0.65, 1.5, 2.2, 3.5, 6, 0.12, 10]);
+  const decoys = new Set();
+  for (const r of ratios) {
+    let d = Math.round(price * r);
+    if (d >= 10000) d = Math.round(d/1000)*1000;
+    else if (d >= 1000) d = Math.round(d/100)*100;
+    else if (d >= 100)  d = Math.round(d/10)*10;
+    else if (d >= 10)   d = Math.round(d/5)*5;
+    d = Math.max(1, d);
+    if (d !== price) decoys.add(d);
+    if (decoys.size === 3) break;
+  }
+  return [...decoys];
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── TOP SHOT API ─────────────────────────────────────────
+async function fetchLiveMoments() {
+  const query = `
+    query SearchMomentListings($input: SearchMomentListingsInput!) {
+      searchMomentListings(input: $input) {
+        data {
+          searchSummary {
+            pagination { total }
+          }
+          momentListings {
+            moment {
+              id
+              flowSerialNumber
+              setPlay {
+                set { name }
+                play {
+                  stats { playerName teamAtMoment }
+                  tagline
+                }
+              }
+              set { name }
+              play {
+                stats { playerName teamAtMoment }
+                tagline
+              }
+            }
+            lowestAsk
+            circulationCount
+            tier
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    input: {
+      filters: { byTiers: ["common","rare","legendary","fandom"] },
+      sortBy: "LISTING_DATE_DESC",
+      pagination: { cursor: "", direction: "RIGHT", limit: 40 }
+    }
+  };
+
+  const res = await fetch(PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+
+  const listings = json?.data?.searchMomentListings?.data?.momentListings;
+  if (!listings || listings.length === 0) throw new Error('No listings');
+
+  // Parse en format normalisé
+  return listings
+    .filter(l => l.lowestAsk && l.lowestAsk > 0)
+    .map(l => {
+      const m = l.moment;
+      const play = m.setPlay?.play || m.play || {};
+      const stats = play.stats || {};
+      const player = stats.playerName || 'Unknown';
+      const team   = stats.teamAtMoment || 'NBA';
+      const set    = m.setPlay?.set?.name || m.set?.name || 'Top Shot';
+      const serial = parseInt(m.flowSerialNumber) || 1;
+      const circ   = l.circulationCount || 0;
+      const tier   = TIER_MAP[l.tier?.toLowerCase()] || 'COMMON';
+      const price  = Math.round(parseFloat(l.lowestAsk));
+      return { player, team, play: play.tagline || 'Highlight', set, serial, circ, tier, price };
+    })
+    .filter(m => m.price >= 1 && m.player !== 'Unknown');
+}
+
+// ── GAME FLOW ────────────────────────────────────────────
+async function startGame() {
+  score=0; streak=0; bestStreak=0; correct=0; qIndex=0;
+  showScreen('gameScreen');
+  showLoading(true);
+
+  try {
+    const live = await fetchLiveMoments();
+    if (live.length >= TOTAL) {
+      queue = shuffle(live).slice(0, TOTAL);
+      usingLiveData = true;
+      console.log(`✅ Live data: ${live.length} moments loaded`);
+    } else {
+      throw new Error('Not enough moments');
+    }
+  } catch (err) {
+    console.warn('⚠️ Falling back to static data:', err.message);
+    queue = shuffle(FALLBACK).slice(0, TOTAL);
+    usingLiveData = false;
+  }
+
+  showLoading(false);
+  loadQ();
+}
+
+function showLoading(show) {
+  // Pendant le chargement on affiche un état neutre sur la carte
+  if (show) {
+    document.getElementById('mPlayer').textContent = 'Loading...';
+    document.getElementById('mPlay').textContent = 'Fetching live data';
+    document.getElementById('mBg').style.background = 'linear-gradient(140deg, #E0DDD9 0%, #F7F6F4 100%)';
+    document.getElementById('mLetters').textContent = '';
+    document.getElementById('mTier').textContent = '—';
+    document.getElementById('mSet').textContent = '—';
+    document.getElementById('mSerial').textContent = '—';
+    document.getElementById('mCirc').textContent = '—';
+    for (let i=0; i<4; i++) {
+      const btn = document.getElementById(`opt${i}`);
+      btn.querySelector('.opt-price').textContent = '...';
+      btn.className = 'opt-btn dimmed';
+    }
+  }
+}
+
+function loadQ() {
+  answered = false;
+  current = queue[qIndex];
+  clearTimer();
+
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+  document.getElementById('progressVal').textContent = `${qIndex+1} / ${TOTAL}`;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').className = 'btn-next';
+
+  const m = current;
+  const colors = teamColors(m.team);
+  const initials = m.player.split(' ').map(w=>w[0]).join('');
+
+  document.getElementById('mBg').style.background = `linear-gradient(140deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
+  document.getElementById('mLetters').textContent = initials;
+  document.getElementById('mTier').textContent = TIER_LABEL[m.tier] || m.tier;
+  document.getElementById('mPlayer').textContent = m.player;
+  document.getElementById('mPlay').textContent = `${m.play} · ${m.team}`;
+  document.getElementById('mSet').textContent = m.set;
+  document.getElementById('mSerial').textContent = `#${String(m.serial).padStart(5,'0')}`;
+  document.getElementById('mCirc').textContent = m.circ ? m.circ.toLocaleString() : '—';
+
+  const card = document.getElementById('momentCard');
+  card.classList.remove('card-in');
+  void card.offsetWidth;
+  card.classList.add('card-in');
+
+  const prices = shuffle([m.price, ...generateDecoys(m.price)]);
+  for (let i=0; i<4; i++) {
+    const btn = document.getElementById(`opt${i}`);
+    btn.className = 'opt-btn';
+    btn.querySelector('.opt-price').textContent = formatPrice(prices[i]);
+    btn.dataset.correct = prices[i] === m.price ? '1' : '0';
+  }
+
+  startTimer();
+}
+
+function answer(i) {
+  if (answered) return;
+  answered = true;
+  clearTimer();
+
+  const btn = document.getElementById(`opt${i}`);
+  const ok = btn.dataset.correct === '1';
+
+  for (let j=0; j<4; j++) {
+    const b = document.getElementById(`opt${j}`);
+    if (b.dataset.correct === '1') b.classList.add('reveal');
+    else if (j === i && !ok)       b.classList.add('wrong');
+    else                            b.classList.add('dimmed');
+  }
+
+  if (ok) {
+    streak++; correct++;
+    bestStreak = Math.max(bestStreak, streak);
+    const pts = 100 * Math.min(streak, 5);
+    score += pts;
+    showFeedback('correct', pts, streak);
+  } else {
+    streak = 0;
+    showFeedback('wrong', 0, 0);
+    document.getElementById('momentCard').classList.add('shake');
+    setTimeout(() => document.getElementById('momentCard').classList.remove('shake'), 350);
+  }
+
+  const sv = document.getElementById('scoreVal');
+  sv.textContent = score;
+  sv.classList.remove('pop'); void sv.offsetWidth; sv.classList.add('pop');
+  document.getElementById('streakVal').textContent = streak;
+  setTimeout(() => { document.getElementById('nextBtn').className = 'btn-next show'; }, 350);
+}
+
+function showFeedback(type, pts, streak) {
+  const el = document.getElementById('feedback');
+  const msg = document.getElementById('fbMsg');
+  const ptsEl = document.getElementById('fbPts');
+
+  if (type === 'correct') {
+    el.className = 'feedback fb-correct show';
+    msg.textContent = streak >= 3 ? `${streak}x Streak 🔥` : CORRECT_MSGS[Math.floor(Math.random()*CORRECT_MSGS.length)];
+    ptsEl.textContent = `+${pts}`;
+  } else if (type === 'wrong') {
+    el.className = 'feedback fb-wrong show';
+    msg.textContent = WRONG_MSGS[Math.floor(Math.random()*WRONG_MSGS.length)];
+    ptsEl.textContent = '+0';
+  } else {
+    el.className = 'feedback fb-timeout show';
+    msg.textContent = "Time's up ⏱";
+    ptsEl.textContent = '+0';
+  }
+}
+
+function nextQuestion() {
+  qIndex++;
+  if (qIndex >= TOTAL) endGame();
+  else loadQ();
+}
+
+function endGame() {
+  showScreen('endScreen');
+  document.getElementById('finalScore').textContent = score.toLocaleString();
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statStreak').textContent = bestStreak;
+  document.getElementById('statAcc').textContent = `${Math.round(correct/TOTAL*100)}%`;
+
+  const acc = correct / TOTAL;
+  let icon, title, sub;
+  if      (acc >= 0.9) { icon='🏆'; title='Market Expert';    sub='You know Top Shot prices cold.'; }
+  else if (acc >= 0.7) { icon='🎯'; title='Sharp Eye';        sub='Solid market awareness.'; }
+  else if (acc >= 0.5) { icon='📈'; title='Getting There';    sub="A few more flips and you'll have it."; }
+  else if (acc >= 0.3) { icon='🤔'; title='Still Learning';   sub='Top Shot prices can be wild.'; }
+  else                  { icon='💸'; title='Rekt';             sub="You'd have lost a lot on that market."; }
+
+  document.getElementById('vIcon').textContent = icon;
+  document.getElementById('vTitle').textContent = title;
+  document.getElementById('vSub').textContent = sub;
+}
+
+function shareScore() {
+  const text = `TS Guess — I scored ${score} points (${correct}/${TOTAL} correct, best streak ${bestStreak}). Think you can beat me?`;
+  if (navigator.share) navigator.share({ title: 'TS Guess', text });
+  else navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
+}
+
+// ── TIMER ───────────────────────────────────────────────
+function startTimer() {
+  timerLeft = TIMER;
+  const fill = document.getElementById('timerFill');
+  fill.style.width = '100%';
+  fill.className = 'timer-fill';
+
+  timerInterval = setInterval(() => {
+    timerLeft -= 0.1;
+    const pct = Math.max(0, (timerLeft / TIMER) * 100);
+    fill.style.width = `${pct}%`;
+    if (pct <= 25) fill.className = 'timer-fill danger';
+    else if (pct <= 50) fill.className = 'timer-fill warn';
+    if (timerLeft <= 0) { clearTimer(); onTimeout(); }
+  }, 100);
+}
+
+function clearTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function onTimeout() {
+  if (answered) return;
+  answered = true;
+  streak = 0;
+  document.getElementById('streakVal').textContent = 0;
+  for (let i=0; i<4; i++) {
+    const b = document.getElementById(`opt${i}`);
+    if (b.dataset.correct === '1') b.classList.add('reveal');
+    else b.classList.add('dimmed');
+  }
+  showFeedback('timeout', 0, 0);
+  setTimeout(() => document.getElementById('nextBtn').className = 'btn-next show', 350);
+}
+
+// ── KEYBOARD ────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (['1','2','3','4'].includes(e.key)) answer(+e.key - 1);
+  if ((e.key === 'Enter' || e.key === ' ') && document.getElementById('nextBtn').classList.contains('show')) {
+    e.preventDefault(); nextQuestion();
+  }
+});
+</script>
+</body>
+</html>
